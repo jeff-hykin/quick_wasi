@@ -24,6 +24,39 @@ function recursiveFsObjectCallback(fsObject, callback, parent="/") {
     }
 }
 
+/**
+ * @example
+ * ```js
+ * import "https://raw.githubusercontent.com/jeff-hykin/deno_proto_shim/2056dfa77bd58ae826d5deedda1a5020717dda9c/main.js"
+ * import { WasmFs } from "https://esm.sh/@wasmer/wasmfs";
+ * const wasmFs = new WasmFs()
+ * wasmFs.fs.mkdirSync("/folder1")
+ * wasmFs.fs.writeFileSync("/folder1/file.txt", "Hello World")
+ * console.log("wasmerFsToFsObject", wasmerFsToFsObject(wasmFs))
+ * ```
+ */
+export function wasmerFsToFsObject(wasmFs, parentPath="/", decodeASCII=true) {
+    const fsObject = {}
+    for (let each of wasmFs.fs.readdirSync(parentPath)) {
+        const path = parentPath + "/" + each
+        const stat = wasmFs.fs.statSync(path)
+        if (stat.isFile()) {
+            fsObject[each] = wasmFs.fs.readFileSync(path)
+            if (decodeASCII) {
+                const decoder = new TextDecoder('utf-8', { fatal: true });
+                try {
+                    fsObject[each] = decoder.decode(fsObject[each])
+                } catch (error) {
+                    
+                }
+            }
+        } else if (stat.isDirectory()) {
+            fsObject[each] = wasmerFsToFsObject(wasmFs, path, decodeASCII)
+        }
+    }
+    return fsObject
+}
+
 export const isProxyFs = Symbol('isProxyFs')
 /**
  * @example
