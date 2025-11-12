@@ -25,6 +25,22 @@ function recursiveFsObjectCallback(fsObject, callback, parent="/") {
 }
 
 export const isProxyFs = Symbol('isProxyFs')
+/**
+ * @example
+ * ```js
+ * var fs = makeFileSystemObject({
+ *     "file.txt": "Hello World",
+ *     "folder1": {
+ *         "file.txt": "Hello World2",
+ *     }
+ * })
+ * fs.folder1["file.txt"] // Hello World
+ * 
+ * // below is only for internal use/testing
+ * const _wasmFs = fs[isProxyFs]
+ * console.log(_wasmFs.fs.readFileSync("/file.txt", "utf-8"))
+ * ```
+ */
 export function makeFileSystemObject(fsObject={}) {
     fsObject = structuredClone(fsObject)
     const wasmFs = new WasmFs()
